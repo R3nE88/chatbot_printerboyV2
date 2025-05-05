@@ -1,0 +1,18 @@
+# Dependencias
+node_modules/
+
+# Credenciales y configuración
+auth/
+config/sucursales.json
+.env
+
+# Archivos de logs y temporales
+*.log
+*.tmp
+
+# Archivos generados automáticamente
+dist/
+build/
+
+# Otros
+.DS_Store
