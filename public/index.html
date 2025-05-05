@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel de WhatsApp - Sucursales</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+    }
+    .sucursal {
+      background: white;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    .estado {
+      font-weight: bold;
+    }
+    .qr {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>📞 Estado de WhatsApp por Sucursal</h1>
+  <div id="sucursales"></div>
+
+  <script>
+    const socket = io();
+    const sucursalesDiv = document.getElementById('sucursales');
+    const estados = {};
+
+    function render() {
+      sucursalesDiv.innerHTML = '';
+
+      for (const id in estados) {
+        const data = estados[id];
+        const div = document.createElement('div');
+        div.className = 'sucursal';
+
+        div.innerHTML = `
+          <h2>${data.nombre}</h2>
+          <p class="estado">Estado: <span style="color: ${data.status === 'conectado' ? 'green' : (data.status === 'escanea' ? 'orange' : 'red')}">
+            ${data.status}
+          </span></p>
+          ${data.qr ? `<div class="qr"><img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(data.qr)}&size=200x200" alt="QR de ${data.nombre}" /></div>` : ''}
+        `;
+
+        sucursalesDiv.appendChild(div);
+      }
+    }
+
+    // Inicializar estados vacíos
+    fetch('/config/sucursales.json')
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(sucursal => {
+          estados[sucursal.id] = { nombre: sucursal.nombre, status: 'conectando', qr: null };
+        });
+        render();
+      });
+
+    socket.on('estado', ({ sucursal, status }) => {
+      if (estados[sucursal]) {
+        estados[sucursal].status = status;
+        estados[sucursal].qr = null;
+        render();
+      }
+    });
+
+    socket.on('qr', ({ sucursal, qr }) => {
+      if (estados[sucursal]) {
+        estados[sucursal].status = 'escanea';
+        estados[sucursal].qr = qr;
+        render();
+      }
+    });
+  </script>
+</body>
+</html>
