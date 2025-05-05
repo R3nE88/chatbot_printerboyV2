@@ -39,7 +39,8 @@ async function iniciarSesion(sucursalId) {
         printQRInTerminal: false,
     });
 
-    sesiones[sucursalId] = { sock, status: 'conectando', qr: null };
+    sesiones[sucursalId] = { sock, status: 'cargando...', qr: null };
+    io.emit('estado', { sucursal: sucursalId, status: 'cargando...' });
 
     // Evento: nuevo QR
     sock.ev.on('connection.update', (update) => {
@@ -89,6 +90,18 @@ async function iniciarSesion(sucursalId) {
 
     // Guardar credenciales cuando cambian
     sock.ev.on('creds.update', saveCreds);
+
+    // Emitir mensajes recibidos desde las sucursales
+    sock.ev.on('messages.upsert', ({ messages }) => {
+        for (const msg of messages) {
+            const mensaje = msg.message?.conversation || 'Archivo Multimedia';
+            const nombre = msg.pushName || 'Desconocido'; // Obtener el nombre del remitente
+            const hora = new Date(msg.messageTimestamp * 1000).toLocaleTimeString(); // Convertir la marca de tiempo a hora legible
+
+            console.log(`📩 [${sucursalId}] Mensaje recibido de ${nombre}: ${mensaje} a las ${hora}`);
+            io.emit('mensaje', { sucursal: sucursalId, mensaje, nombre, hora });
+        }
+    });
 }
 
 // Emitir el estado actual de las sesiones al cliente cuando se conecta
@@ -98,7 +111,18 @@ io.on('connection', (socket) => {
     // Enviar el estado actual de todas las sucursales al cliente
     for (const [sucursalId, sesion] of Object.entries(sesiones)) {
         socket.emit('estado', { sucursal: sucursalId, status: sesion.status });
+
+        // Si hay un QR disponible, enviarlo al cliente
+        if (sesion.qr) {
+            socket.emit('qr', { sucursal: sucursalId, qr: sesion.qr });
+        }
     }
+
+    // Escuchar mensajes desde el cliente y reenviarlos a la consola
+    socket.on('mensaje', ({ sucursal, mensaje }) => {
+        console.log(`📩 [${sucursal}] Mensaje recibido: ${mensaje}`);
+        io.emit('mensaje', { sucursal, mensaje }); // Emitir el mensaje a todos los clientes conectados
+    });
 });
 
 // === Iniciar todas las sucursales ===
