@@ -116,26 +116,26 @@ async function iniciarSesion(sucursalId) {
   }
 
   sock.ev.on('messages.upsert', async ({ messages }) => {
-      for (const msg of messages) {
-          const mensaje = obtenerTextoDelMensaje(msg);
-          if (!mensaje) return; // Ignorar si no hay texto
+    for (const msg of messages) {
+        // ❗️IGNORAR MENSAJES ENVIADOS POR EL BOT
+        if (msg.key.fromMe) return;
 
-          const nombre = msg.pushName || 'Desconocido';
-          const hora = new Date(msg.messageTimestamp * 1000).toLocaleTimeString();
+        const mensaje = obtenerTextoDelMensaje(msg);
+        if (!mensaje) return;
 
-          console.log(`📩 [${sucursalId}] Mensaje recibido de ${nombre}: ${mensaje} a las ${hora}`);
-          io.emit('mensaje', { sucursal: sucursalId, mensaje, nombre, hora });
-
-          if (esMensajeDeDuda(mensaje)) {
-              const mensajeRedireccion = `¡Hola! Este número es solo para enviar archivos. Para cotizaciones y preguntas, por favor escríbenos a nuestro número de atención: *653-176-7005 (Marketing)*`;
-              try {
-                  await sock.sendMessage(msg.key.remoteJid, { text: mensajeRedireccion });
-                  console.log(`🤖 [${sucursalId}] Mensaje de redirección enviado a ${nombre}`);
-              } catch (error) {
-                  console.error(`❌ [${sucursalId}] Error al enviar mensaje automático:`, error);
-              }
-          }
-      }
+        if (esMensajeDeDuda(mensaje)) {
+            const sucursal = sucursales.find(s => s.id === sucursalId);
+            const nombreSucursal = sucursal?.nombre || sucursalId;
+        
+            const mensajeRedireccion = `¡Hola! Estás escribiendo a *${nombreSucursal}*. Este número es solo para enviar archivos. Para cotizaciones y preguntas, por favor escríbenos a nuestro número de atención: *653-176-7005 (Marketing)*`;        
+            try {
+                await sock.sendMessage(msg.key.remoteJid, { text: mensajeRedireccion });
+                console.log(`🤖 [${sucursalId}] Mensaje de redirección enviado.`);
+            } catch (error) {
+                console.error(`❌ [${sucursalId}] Error al enviar mensaje automático:`, error);
+            }
+        }
+    }
   });
 }
 

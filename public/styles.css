@@ -3,7 +3,12 @@ body {
   font-family: sans-serif;
   background: #f5f5f5;
   margin: 0;
-  padding: 2rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
 }
 h1 {
   text-align: center;
@@ -15,6 +20,7 @@ h1 {
   border-radius: 0 0 10px 10px;
   box-shadow: 0 0 10px #ccc;
   margin-top: 0;
+  text-align: center;
 }
 .estado {
   font-weight: bold;
@@ -63,6 +69,7 @@ h1 {
   justify-content: center;
   flex-wrap: wrap;
   margin-bottom: 1rem;
+  gap: 0.5rem;
 }
 .consola {
   background: #e0e0e0;
@@ -77,6 +84,11 @@ h1 {
   display: flex;
   gap: 1rem;
   justify-content: space-between; /* Default alignment */
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  flex: 1;
+  flex-direction: column;
 }
 .contenedor.centrado {
   justify-content: center; /* Center alignment when messages are hidden */
