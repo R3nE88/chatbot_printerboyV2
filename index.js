@@ -34,6 +34,7 @@ function esMensajeDeDuda(text) {
       texto.includes('hola') ||
       texto.includes('?') ||
       texto.includes('precio') ||
+      texto.includes('canva') ||
       texto.includes('cuánto') ||
       texto.includes('cuanto') ||
       texto.includes('costo') ||
